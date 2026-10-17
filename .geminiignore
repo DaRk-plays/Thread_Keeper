@@ -1,0 +1,30 @@
+# Never expose secrets/private configuration to project context search.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets*
+
+# Generated/dependency noise.
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.turbo/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+
+# OS/editor noise.
+.DS_Store
+*.swp
+
+# Large/raw benchmark artifacts should be summarized before agent ingestion.
+artifacts/raw/
+
