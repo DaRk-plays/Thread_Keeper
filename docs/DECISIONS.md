@@ -44,6 +44,33 @@ ThreadKeeper must distinguish observed/derived/inferred/unknown information and 
 
 Use a developer workspace as the first high-fidelity scenario because versioned code/tests provide strong evidence and a dramatic "state changed while you were away" story. Keep the domain architecture extensible to other knowledge work without building shallow connectors prematurely.
 
+## D-007 — Local-first TypeScript architecture with NodeNext ESM & Zod
+
+**Date:** 2026-10-17
+**Status:** Accepted
+
+Implemented Foundation Milestone 1 entirely in Node.js 25 with TypeScript (NodeNext / ESM) and Zod schema validation. Domain logic is strictly separated into `src/domain` and `src/engine` with zero AWS or cloud dependencies, allowing full deterministic testing and local execution.
+
+**Consequences:** The core Continuity Engine runs fast, offline, and zero-cost, while remaining ready for pluggable cloud adapters.
+
+## D-008 — MCP Streamable HTTP implementation using @modelcontextprotocol/sdk
+
+**Date:** 2026-10-17
+**Status:** Accepted
+
+Implemented the self-hosted MCP server using the official `@modelcontextprotocol/sdk` (v1.32.1) `StreamableHTTPServerTransport` with stateful session support (`sessionIdGenerator`). All 6 core continuity tools (`capture_checkpoint`, `resume_thread`, `compare_current_state`, `find_decision`, `find_unfinished_work`, `create_handoff`) are exposed and verified over HTTP.
+
+**Consequences:** Meets the competition's primary track requirement of self-hosted MCP >= 2025-11-25 over Streamable HTTP.
+
+## D-009 — Deterministic staleness propagation and evidence integrity verification
+
+**Date:** 2026-10-17
+**Status:** Accepted
+
+Enforce strict evidence integrity: every evidence ID referenced by a goal, decision, attempt, assumption, blocker, or next action must exist in the checkpoint's evidence pool. If an artifact changes, dependent assumptions are marked `stale` and dependent decisions are automatically marked for review.
+
+**Consequences:** Prevents hallucinated memory and ensures returning users only receive grounded recommendations.
+
 ## Decision template
 
 ```markdown

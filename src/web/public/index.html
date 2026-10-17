@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThreadKeeper — Visual Continuity Console</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">TK</div>
+        <div>
+          <h1>ThreadKeeper</h1>
+          <p class="tagline">The continuity layer for human attention &bull; Alexa+ Hackathon</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-success"><span class="dot"></span> Local Runtime Active</span>
+        <span class="badge badge-info">MCP 2025-11-25+ (Streamable HTTP)</span>
+        <span class="badge badge-neutral">No AWS (Zero-Cost Local)</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="console-grid">
+      <!-- Left Column: Ambient Voice & Scenario Actions -->
+      <section class="panel voice-panel">
+        <div class="panel-header">
+          <h2>Ambient Voice &amp; Demo Controls</h2>
+          <span class="subtext">Simulating Alexa+ Conversational Surface</span>
+        </div>
+
+        <div class="voice-actions">
+          <button id="btn-alexa-park" class="btn btn-primary">
+            <span class="btn-icon">🎙️</span> "Alexa, park this"
+          </button>
+          <button id="btn-alexa-resume" class="btn btn-secondary">
+            <span class="btn-icon">⚡</span> "Alexa, resume my thread"
+          </button>
+        </div>
+
+        <div class="scenario-stepper">
+          <h3>Deterministic Seeded Scenario</h3>
+          <p class="scenario-desc">Debugging invoice status filtering on billing dashboard</p>
+          <div class="stepper-buttons">
+            <button id="btn-step-1" class="btn-step">
+              <span class="step-num">1</span> Park Initial Bug State
+            </button>
+            <button id="btn-step-2" class="btn-step">
+              <span class="step-num">2</span> Simulate Interruption &amp; Teammate Commit
+            </button>
+            <button id="btn-step-3" class="btn-step">
+              <span class="step-num">3</span> Resume &amp; Compute Continuity Diff
+            </button>
+            <button id="btn-step-4" class="btn-step">
+              <span class="step-num">4</span> Export Agent Handoff Packet
+            </button>
+          </div>
+        </div>
+
+        <!-- 30-Second Voice Brief Output Box -->
+        <div class="voice-transcript-card">
+          <div class="card-label">🔊 Alexa+ 30-Second Spoken Brief</div>
+          <div id="voice-brief-text" class="voice-text">
+            "Ready. Click 'Park Initial Bug State' or 'Alexa, park this' to capture your working thread."
+          </div>
+        </div>
+
+        <!-- Next Action Card -->
+        <div class="grounded-action-card">
+          <div class="card-label">🎯 Recommended Grounded Next Action</div>
+          <div id="next-action-desc" class="action-desc">Awaiting thread activity...</div>
+          <div id="next-action-meta" class="action-meta">
+            <span id="next-action-priority" class="badge">--</span>
+            <span id="next-action-target" class="badge badge-outline">--</span>
+          </div>
+          <div id="next-action-rationale" class="action-rationale"></div>
+        </div>
+      </section>
+
+      <!-- Right Column: Checkpoint & Continuity Diff Inspector -->
+      <section class="panel inspector-panel">
+        <div class="panel-header">
+          <h2>Cognitive State &amp; Continuity Diff</h2>
+          <div class="tab-pills">
+            <button class="pill active" data-tab="diff">Continuity Diff</button>
+            <button class="pill" data-tab="checkpoint">Cognitive Checkpoint</button>
+            <button class="pill" data-tab="handoff">Agent Handoff</button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Continuity Diff -->
+        <div id="tab-diff" class="tab-content active">
+          <!-- Summary Metrics -->
+          <div class="diff-metrics">
+            <div class="metric-card metric-danger">
+              <div class="metric-num" id="metric-stale">0</div>
+              <div class="metric-title">Stale Assumptions</div>
+            </div>
+            <div class="metric-card metric-warning">
+              <div class="metric-num" id="metric-changed">0</div>
+              <div class="metric-title">Changed Files</div>
+            </div>
+            <div class="metric-card metric-success">
+              <div class="metric-num" id="metric-valid">0</div>
+              <div class="metric-title">Intact Contexts</div>
+            </div>
+          </div>
+
+          <!-- Diff Sections -->
+          <div class="diff-section">
+            <h3 class="section-title text-danger">⚠️ Stale Assumptions &amp; Invalidation Trail</h3>
+            <div id="stale-assumptions-list" class="cards-list">
+              <div class="empty-state">No stale assumptions detected yet.</div>
+            </div>
+          </div>
+
+          <div class="diff-section">
+            <h3 class="section-title text-warning">🔄 Workspace State Changes (While Away)</h3>
+            <div id="changed-artifacts-list" class="cards-list">
+              <div class="empty-state">No workspace changes detected yet.</div>
+            </div>
+          </div>
+
+          <div class="diff-section">
+            <h3 class="section-title text-success">✅ Intact Context (Still Valid)</h3>
+            <div id="valid-context-list" class="cards-list">
+              <div class="empty-state">No comparison performed yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Cognitive Checkpoint -->
+        <div id="tab-checkpoint" class="tab-content">
+          <div class="cp-section">
+            <h4>Primary Objective</h4>
+            <div id="cp-goal" class="cp-text-box">--</div>
+          </div>
+          <div class="cp-section">
+            <h4>Decisions &amp; Rationale</h4>
+            <div id="cp-decisions" class="cards-list"></div>
+          </div>
+          <div class="cp-section">
+            <h4>Captured Evidence &amp; Provenance</h4>
+            <div id="cp-evidence" class="cards-list"></div>
+          </div>
+          <div class="cp-section">
+            <h4>Attempts &amp; Outcomes</h4>
+            <div id="cp-attempts" class="cards-list"></div>
+          </div>
+          <div class="cp-section">
+            <h4>Active Assumptions</h4>
+            <div id="cp-assumptions" class="cards-list"></div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Agent Handoff -->
+        <div id="tab-handoff" class="tab-content">
+          <div class="handoff-header">
+            <h3>Standardized Lossless Handoff Packet</h3>
+            <p class="subtext">Ready for handoff to a colleague or autonomous coding agent</p>
+          </div>
+          <pre id="handoff-json" class="json-viewer">// Click 'Export Agent Handoff Packet' to view context packet</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
