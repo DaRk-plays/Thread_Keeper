@@ -75,6 +75,34 @@ export function computeContinuityDiff(
     }
   }
 
+  // 1b. Check for Newly Created / Added Artifacts
+  const checkpointArtifactPaths = new Set(checkpoint.artifacts.map((a) => a.path_or_uri));
+  for (const nowArt of currentState.artifacts) {
+    if (!checkpointArtifactPaths.has(nowArt.path_or_uri)) {
+      changed.push({
+        artifact_id: nowArt.id,
+        path: nowArt.path_or_uri,
+        then_version: "not_present",
+        now_version: nowArt.version_or_hash,
+        diff_summary: `New artifact detected in workspace: ${nowArt.path_or_uri} at version ${nowArt.version_or_hash}.`
+      });
+      changedArtifactIds.add(nowArt.id);
+      changedArtifactPaths.add(nowArt.path_or_uri);
+    }
+  }
+
+  // 1c. Check for Branch Switch
+  if (currentState.git_branch && checkpoint.work_context.branch && currentState.git_branch !== checkpoint.work_context.branch) {
+    changed.push({
+      artifact_id: "git-branch",
+      path: "git:branch",
+      then_version: checkpoint.work_context.branch,
+      now_version: currentState.git_branch,
+      diff_summary: `Active Git branch changed from '${checkpoint.work_context.branch}' to '${currentState.git_branch}'.`
+    });
+    changedArtifactPaths.add("git:branch");
+  }
+
   // 2. Identify Stale Assumptions & Staleness Propagation
   const staleAssumptionIds = new Set<string>();
 
@@ -86,7 +114,9 @@ export function computeContinuityDiff(
     // Check if assumption target artifact changed
     if (assumption.target_artifact_id && changedArtifactIds.has(assumption.target_artifact_id)) {
       isStale = true;
-      reason = `Target artifact [${assumption.target_artifact_id}] was modified while user was away.`;
+      const targetArt = checkpoint.artifacts.find((a) => a.id === assumption.target_artifact_id);
+      const targetPath = targetArt ? targetArt.path_or_uri : assumption.target_artifact_id;
+      reason = `Target artifact [${assumption.target_artifact_id}] (${targetPath}) was modified while user was away.`;
     }
 
     // Check if any changed artifact path is mentioned in the statement
@@ -111,6 +141,53 @@ export function computeContinuityDiff(
     }
 
     if (isStale) {
+      if (!invalidatingEvidence) {
+        const targetArt = checkpoint.artifacts.find((a) => a.id === assumption.target_artifact_id);
+        const targetPath = targetArt ? targetArt.path_or_uri : assumption.target_artifact_id;
+
+        // 1. Look for artifact-specific evidence in new_evidence
+        if (targetPath) {
+          invalidatingEvidence = new_evidence.find(
+            (ev) =>
+              ev.source === targetPath ||
+              ev.metadata?.path === targetPath ||
+              ev.id === `ev-art-${targetPath.replace(/[/\\.]/g, "-")}`
+          );
+        }
+
+        // 2. Look for evidence explicitly mentioning targetPath (excluding generic HEAD/branch)
+        if (!invalidatingEvidence && targetPath) {
+          invalidatingEvidence = new_evidence.find(
+            (ev) =>
+              (ev.source.includes(targetPath) || ev.content.includes(targetPath)) &&
+              ev.id !== "ev-git-head" &&
+              ev.id !== "ev-git-branch"
+          );
+        }
+
+        // 3. If still not found, check if a changed artifact corresponds to this assumption and synthesize observed evidence
+        if (!invalidatingEvidence && targetPath) {
+          const changedArt = changed.find((c) => c.path === targetPath);
+          if (changedArt) {
+            const synthEvidence: Evidence = {
+              id: `ev-diff-${targetPath.replace(/[/\\.]/g, "-")}`,
+              type: "file_hash",
+              source: targetPath,
+              content: `Observed change in ${targetPath}: version changed from ${changedArt.then_version} to ${changedArt.now_version}`,
+              captured_at: currentState.timestamp || new Date().toISOString(),
+              epistemic_status: "observed",
+              metadata: {
+                path: targetPath,
+                then_version: changedArt.then_version,
+                now_version: changedArt.now_version,
+                invalidates_assumption_id: assumption.id
+              }
+            };
+            new_evidence.push(synthEvidence);
+            invalidatingEvidence = synthEvidence;
+          }
+        }
+      }
       staleAssumptionIds.add(assumption.id);
 
       // Propagate staleness to decisions relying on this assumption
@@ -171,8 +248,12 @@ export function computeContinuityDiff(
     if (primaryStale?.invalidating_evidence) {
       citedEvidenceIds.push(primaryStale.invalidating_evidence.id);
     }
-    if (new_evidence.length > 0 && !citedEvidenceIds.includes(new_evidence[0].id)) {
-      citedEvidenceIds.push(new_evidence[0].id);
+    // Include artifact-specific evidence for changed files
+    for (const c of changed) {
+      const artEv = new_evidence.find((ev) => ev.source === c.path || ev.metadata?.path === c.path);
+      if (artEv && !citedEvidenceIds.includes(artEv.id)) {
+        citedEvidenceIds.push(artEv.id);
+      }
     }
 
     recommended_next_action = {

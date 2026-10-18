@@ -71,6 +71,15 @@ Enforce strict evidence integrity: every evidence ID referenced by a goal, decis
 
 **Consequences:** Prevents hallucinated memory and ensures returning users only receive grounded recommendations.
 
+## D-010 — Safe read-only LocalGitWorkspaceProvider with SHA-256 artifact hashing
+
+**Date:** 2026-10-17
+**Status:** Accepted
+
+Implement `LocalGitWorkspaceProvider` using Node's `child_process.execFile` (not shell `exec`) with strictly read-only Git commands (`git rev-parse`, `git log`, `git status --porcelain`, `git diff --stat`, `git ls-files`). Never execute mutating git commands (`commit`, `checkout`, `reset`, `stash`, `push`). Exclude sensitive file patterns (`.env`, `.key`, `id_rsa`, `id_ed25519`, `.pem`, `credentials.json`, `secret*`) from artifact tracking and evidence content. Compute deterministic SHA-256 hashes (`sha256-<hex>`) for tracked and dirty files up to 1MB. Include `git:head` and `git:branch` as first-class workspace artifacts.
+
+**Consequences:** Guarantees user repositories are never mutated or leaked, while providing high-fidelity workspace state inspection, dirty file detection, and diff computation for real interruptions.
+
 ## Decision template
 
 ```markdown

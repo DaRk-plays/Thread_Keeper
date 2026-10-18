@@ -15,7 +15,8 @@
     "start": "node dist/web/server.js",
     "demo": "tsc && node dist/cli/demo.js",
     "verify:mcp": "tsc && node dist/cli/mcp-client.js",
-    "verify:web": "tsc && node dist/cli/verify-web.js"
+    "verify:web": "tsc && node dist/cli/verify-web.js",
+    "verify:workspace": "tsc && node dist/cli/verify-workspace.js"
   },
   "repository": {
     "type": "git",

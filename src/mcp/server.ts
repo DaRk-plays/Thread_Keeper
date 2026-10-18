@@ -5,7 +5,8 @@ import { ContinuityEngine } from "../engine/continuity.js";
 import {
   ArtifactSchema,
   CognitiveCheckpoint,
-  EvidenceSchema
+  EvidenceSchema,
+  ResumeBrief
 } from "../domain/types.js";
 import { CurrentWorkspaceState } from "../engine/diff.js";
 
@@ -64,6 +65,7 @@ export function createThreadKeeperMcpServer(engine: ContinuityEngine): McpServer
         evidence_ids: z.array(z.string()).default([])
       })).default([]).describe("Current impediments or obstacles"),
       open_questions: z.array(z.string()).default([]).describe("Unresolved questions requiring future inquiry"),
+      workspace_path: z.string().optional().describe("Local Git repository path to automatically inspect and capture evidence from"),
       next_actions: z.array(z.object({
         id: z.string(),
         description: z.string(),
@@ -75,36 +77,51 @@ export function createThreadKeeperMcpServer(engine: ContinuityEngine): McpServer
     },
     async (args) => {
       try {
-        const checkpointId = `cp-${randomUUID().slice(0, 8)}`;
-        const checkpoint: CognitiveCheckpoint = {
-          checkpoint_id: checkpointId,
-          thread_id: args.thread_id,
-          actor_id: args.actor_id,
-          created_at: new Date().toISOString(),
-          goal: {
-            text: args.goal_text,
-            success_criteria: [],
-            evidence_ids: args.evidence.map((e) => e.id)
-          },
-          state_summary: args.state_summary,
-          work_context: {
-            project_name: args.workspace_root.split("/").pop() || "workspace",
-            workspace_root: args.workspace_root,
-            branch: args.branch,
-            active_file: args.active_file
-          },
-          evidence: args.evidence,
-          attempts: args.attempts,
-          decisions: args.decisions,
-          artifacts: args.artifacts,
-          assumptions: args.assumptions,
-          blockers: args.blockers,
-          open_questions: args.open_questions,
-          next_actions: args.next_actions,
-          uncertainties: []
-        };
+        let saved: CognitiveCheckpoint;
 
-        const saved = await engine.park(checkpoint);
+        if (args.workspace_path) {
+          saved = await engine.parkWorkspace({
+            workspacePath: args.workspace_path,
+            goalText: args.goal_text,
+            stateSummary: args.state_summary,
+            actorId: args.actor_id,
+            threadId: args.thread_id,
+            nextActionDescription: args.next_actions?.[0]?.description,
+            assumptions: args.assumptions,
+            decisions: args.decisions
+          });
+        } else {
+          const checkpointId = `cp-${randomUUID().slice(0, 8)}`;
+          const checkpoint: CognitiveCheckpoint = {
+            checkpoint_id: checkpointId,
+            thread_id: args.thread_id,
+            actor_id: args.actor_id,
+            created_at: new Date().toISOString(),
+            goal: {
+              text: args.goal_text,
+              success_criteria: [],
+              evidence_ids: args.evidence.map((e) => e.id)
+            },
+            state_summary: args.state_summary,
+            work_context: {
+              project_name: args.workspace_root.split("/").pop() || "workspace",
+              workspace_root: args.workspace_root,
+              branch: args.branch,
+              active_file: args.active_file
+            },
+            evidence: args.evidence,
+            attempts: args.attempts,
+            decisions: args.decisions,
+            artifacts: args.artifacts,
+            assumptions: args.assumptions,
+            blockers: args.blockers,
+            open_questions: args.open_questions,
+            next_actions: args.next_actions,
+            uncertainties: []
+          };
+          saved = await engine.park(checkpoint);
+        }
+
         return {
           content: [
             {
@@ -133,20 +150,30 @@ export function createThreadKeeperMcpServer(engine: ContinuityEngine): McpServer
     "Reconstructs state for a thread, calculates Continuity Diff against current reality, detects stale context, and produces a 30-second voice brief plus next action.",
     {
       thread_id: z.string().describe("Thread identifier to resume"),
+      workspace_path: z.string().optional().describe("Local Git repository path to automatically inspect and compare against checkpoint"),
       current_branch: z.string().optional().describe("Current Git branch"),
       current_artifacts: z.array(ArtifactSchema).optional().describe("Current state of key artifacts"),
       current_evidence: z.array(EvidenceSchema).optional().describe("Newly observed evidence since checkpoint")
     },
     async (args) => {
       try {
-        const currentState: CurrentWorkspaceState = {
-          timestamp: new Date().toISOString(),
-          git_branch: args.current_branch || "main",
-          artifacts: args.current_artifacts || [],
-          evidence: args.current_evidence || []
-        };
+        let brief: ResumeBrief;
 
-        const brief = await engine.resume(args.thread_id, currentState);
+        if (args.workspace_path) {
+          brief = await engine.resumeWorkspace({
+            threadId: args.thread_id,
+            workspacePath: args.workspace_path
+          });
+        } else {
+          const currentState: CurrentWorkspaceState = {
+            timestamp: new Date().toISOString(),
+            git_branch: args.current_branch || "main",
+            artifacts: args.current_artifacts || [],
+            evidence: args.current_evidence || []
+          };
+          brief = await engine.resume(args.thread_id, currentState);
+        }
+
         return {
           content: [
             {
@@ -171,19 +198,26 @@ export function createThreadKeeperMcpServer(engine: ContinuityEngine): McpServer
     "Computes Continuity Diff between a specific checkpoint and current workspace reality.",
     {
       checkpoint_id: z.string().describe("Checkpoint ID to compare against"),
-      current_artifacts: z.array(ArtifactSchema).describe("Current workspace artifacts"),
+      workspace_path: z.string().optional().describe("Local Git repository path to inspect and compare"),
+      current_artifacts: z.array(ArtifactSchema).optional().describe("Current workspace artifacts (if workspace_path not supplied)"),
       current_evidence: z.array(EvidenceSchema).optional().describe("Newly observed evidence items")
     },
     async (args) => {
       try {
-        const currentState: CurrentWorkspaceState = {
-          timestamp: new Date().toISOString(),
-          git_branch: "current",
-          artifacts: args.current_artifacts,
-          evidence: args.current_evidence || []
-        };
+        let diff;
 
-        const diff = await engine.compareCurrentState(args.checkpoint_id, currentState);
+        if (args.workspace_path) {
+          diff = await engine.compareWorkspace(args.checkpoint_id, args.workspace_path);
+        } else {
+          const currentState: CurrentWorkspaceState = {
+            timestamp: new Date().toISOString(),
+            git_branch: "current",
+            artifacts: args.current_artifacts || [],
+            evidence: args.current_evidence || []
+          };
+          diff = await engine.compareCurrentState(args.checkpoint_id, currentState);
+        }
+
         return {
           content: [
             {

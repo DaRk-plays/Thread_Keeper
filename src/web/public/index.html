@@ -64,6 +64,22 @@
           </div>
         </div>
 
+        <div class="scenario-stepper" style="margin-top: 14px;">
+          <h3>Real Git Workspace Continuity</h3>
+          <p class="scenario-desc">Inspect real repository &amp; detect uncommitted changes</p>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input id="input-workspace-path" type="text" placeholder="/path/to/local/git/repo" style="flex:1; background:#0d1117; border:1px solid var(--border-subtle); color:white; padding:8px 10px; border-radius:6px; font-family:var(--font-mono); font-size:12px;" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button id="btn-workspace-park" class="btn btn-secondary" style="font-size:12px; padding:8px 12px;">
+              📁 Park Workspace
+            </button>
+            <button id="btn-workspace-resume" class="btn btn-secondary" style="font-size:12px; padding:8px 12px;">
+              🔄 Resume Workspace
+            </button>
+          </div>
+        </div>
+
         <!-- 30-Second Voice Brief Output Box -->
         <div class="voice-transcript-card">
           <div class="card-label">🔊 Alexa+ 30-Second Spoken Brief</div>

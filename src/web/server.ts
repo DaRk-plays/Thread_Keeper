@@ -14,6 +14,7 @@ import {
   getUnchangedWorkspaceState
 } from "../scenario/seeded.js";
 import { CurrentWorkspaceState } from "../engine/diff.js";
+import { LocalGitWorkspaceProvider } from "../providers/workspace.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,11 +136,56 @@ export function createServer(customEngine?: ContinuityEngine) {
     }
   });
 
-  // Handoff Packet
+  // Handoff Packet Export
   app.get("/api/handoff/:threadId", async (req, res) => {
     try {
       const handoff = await engine.createHandoff(req.params.threadId, getInterruptedWorkspaceState());
       res.json({ status: "success", handoff });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ status: "error", message: msg });
+    }
+  });
+
+  // Workspace: Inspect Local Repository
+  app.post("/api/workspace/inspect", async (req, res) => {
+    try {
+      const { workspace_path } = req.body;
+      const workspaceProvider = new LocalGitWorkspaceProvider();
+      const snapshot = await workspaceProvider.captureSnapshot(workspace_path || process.cwd());
+      res.json({ status: "success", snapshot });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ status: "error", message: msg });
+    }
+  });
+
+  // Workspace: Park Real Repository
+  app.post("/api/workspace/park", async (req, res) => {
+    try {
+      const { workspace_path, goal_text, thread_id } = req.body;
+      const saved = await engine.parkWorkspace({
+        workspacePath: workspace_path || process.cwd(),
+        goalText: goal_text,
+        threadId: thread_id
+      });
+      res.json({ status: "success", checkpoint: saved });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ status: "error", message: msg });
+    }
+  });
+
+  // Workspace: Resume Real Repository
+  app.post("/api/workspace/resume", async (req, res) => {
+    try {
+      const { workspace_path, thread_id } = req.body;
+      const targetPath = workspace_path || process.cwd();
+      const brief = await engine.resumeWorkspace({
+        workspacePath: targetPath,
+        threadId: thread_id || `thread-${path.basename(targetPath)}`
+      });
+      res.json({ status: "success", brief });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       res.status(400).json({ status: "error", message: msg });

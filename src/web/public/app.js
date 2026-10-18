@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnStep4 = document.getElementById("btn-step-4");
   const btnAlexaPark = document.getElementById("btn-alexa-park");
   const btnAlexaResume = document.getElementById("btn-alexa-resume");
+  const inputWorkspacePath = document.getElementById("input-workspace-path");
+  const btnWorkspacePark = document.getElementById("btn-workspace-park");
+  const btnWorkspaceResume = document.getElementById("btn-workspace-resume");
 
   const voiceBriefText = document.getElementById("voice-brief-text");
   const nextActionDesc = document.getElementById("next-action-desc");
@@ -229,6 +232,109 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
   }
 
+  async function parkWorkspace() {
+    const wsPath = inputWorkspacePath?.value?.trim() || "";
+    voiceBriefText.textContent = `Parking real workspace: ${wsPath || "(current working directory)"}...`;
+    try {
+      const res = await fetch("/api/workspace/park", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspace_path: wsPath || undefined })
+      });
+      const data = await res.json();
+      if (data.status === "error") {
+        voiceBriefText.textContent = `Error: ${data.message}`;
+        return;
+      }
+      const cp = data.checkpoint;
+      voiceBriefText.textContent = `Parked workspace checkpoint "${cp.checkpoint_id}". ${cp.evidence.length} evidence items and ${cp.artifacts.length} artifacts captured.`;
+      renderCheckpoint(cp);
+      if (cp.next_actions && cp.next_actions.length > 0) {
+        renderNextAction(cp.next_actions[0]);
+      }
+      metricStale.textContent = "0";
+      metricChanged.textContent = "0";
+      metricValid.textContent = String(cp.artifacts.length);
+      staleList.innerHTML = `<div class="empty-state">No stale assumptions. State freshly captured from Git.</div>`;
+      changedList.innerHTML = `<div class="empty-state">Workspace state captured. Tracking ${cp.artifacts.length} artifacts.</div>`;
+      validList.innerHTML = cp.artifacts
+        .map((a) => `<div class="item-card item-card-success"><span class="card-title">${a.path_or_uri}</span><span class="card-detail">Hash: ${a.version_or_hash.slice(0, 16)}...</span></div>`)
+        .join("");
+      document.querySelector('[data-tab="checkpoint"]').click();
+    } catch (err) {
+      voiceBriefText.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  async function resumeWorkspace() {
+    const wsPath = inputWorkspacePath?.value?.trim() || "";
+    voiceBriefText.textContent = `Resuming real workspace: ${wsPath || "(current working directory)"}...`;
+    try {
+      const res = await fetch("/api/workspace/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspace_path: wsPath || undefined })
+      });
+      const data = await res.json();
+      if (data.status === "error") {
+        voiceBriefText.textContent = `Error: ${data.message}`;
+        return;
+      }
+      const brief = data.brief;
+      const diff = brief.continuity_diff;
+      voiceBriefText.textContent = `"${brief.voice_summary}"`;
+      renderNextAction(brief.grounded_next_action);
+
+      metricStale.textContent = String(diff.stale_assumptions.length);
+      metricChanged.textContent = String(diff.changed.length);
+      metricValid.textContent = String(diff.still_valid.length);
+
+      if (diff.stale_assumptions.length === 0) {
+        staleList.innerHTML = `<div class="empty-state">All assumptions remain valid!</div>`;
+      } else {
+        staleList.innerHTML = diff.stale_assumptions
+          .map((sa) => `
+            <div class="item-card item-card-danger">
+              <span class="card-title">Assumption [${sa.assumption_id}]: "${sa.statement}"</span>
+              <span class="card-detail">${sa.reason_stale}</span>
+              ${sa.affected_decision_ids && sa.affected_decision_ids.length > 0 ? `<span class="badge badge-neutral" style="margin-top:4px">Propagated Staleness: Decision [${sa.affected_decision_ids.join(", ")}] needs review</span>` : ""}
+            </div>
+          `)
+          .join("");
+      }
+
+      if (diff.changed.length === 0) {
+        changedList.innerHTML = `<div class="empty-state">No changed artifacts detected.</div>`;
+      } else {
+        changedList.innerHTML = diff.changed
+          .map((ch) => `
+            <div class="item-card item-card-warning">
+              <span class="card-title">${ch.path}</span>
+              <span class="card-detail">${ch.diff_summary}</span>
+              <span class="card-provenance">Then: ${ch.then_version} &bull; Now: ${ch.now_version}</span>
+            </div>
+          `)
+          .join("");
+      }
+
+      if (diff.still_valid.length === 0) {
+        validList.innerHTML = `<div class="empty-state">No intact contexts recorded.</div>`;
+      } else {
+        validList.innerHTML = diff.still_valid
+          .map((sv) => `
+            <div class="item-card item-card-success">
+              <span class="card-title">${sv.type.toUpperCase()}</span>
+              <span class="card-detail">${sv.summary}</span>
+            </div>
+          `)
+          .join("");
+      }
+      document.querySelector('[data-tab="diff"]').click();
+    } catch (err) {
+      voiceBriefText.textContent = `Error: ${err.message}`;
+    }
+  }
+
   // Event Listeners
   btnStep1.addEventListener("click", parkInitialState);
   btnAlexaPark.addEventListener("click", parkInitialState);
@@ -239,6 +345,13 @@ document.addEventListener("DOMContentLoaded", () => {
   btnAlexaResume.addEventListener("click", resumeAndDiff);
 
   btnStep4.addEventListener("click", exportHandoff);
+
+  if (btnWorkspacePark) {
+    btnWorkspacePark.addEventListener("click", parkWorkspace);
+  }
+  if (btnWorkspaceResume) {
+    btnWorkspaceResume.addEventListener("click", resumeWorkspace);
+  }
 
   // Auto-load initial state
   parkInitialState();

@@ -64,7 +64,7 @@ describe("ThreadKeeper MCP Server & Tool Contracts", () => {
 
     const diff = await engine.compareCurrentState(cp.checkpoint_id, {
       timestamp: new Date().toISOString(),
-      git_branch: "main",
+      git_branch: cp.work_context.branch,
       artifacts: [
         {
           id: "art-fe-filter",

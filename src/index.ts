@@ -3,6 +3,7 @@ export * from "./domain/validation.js";
 export * from "./domain/errors.js";
 export * from "./providers/memory.js";
 export * from "./providers/model.js";
+export * from "./providers/workspace.js";
 export * from "./engine/diff.js";
 export * from "./engine/continuity.js";
 export * from "./scenario/seeded.js";

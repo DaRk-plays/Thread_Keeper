@@ -9,11 +9,32 @@ import { CheckpointNotFoundError } from "../domain/errors.js";
 import { validateCheckpoint, validateHandoffPacket, validateResumeBrief } from "../domain/validation.js";
 import { MemoryProvider } from "../providers/memory.js";
 import { ModelProvider } from "../providers/model.js";
+import { LocalGitWorkspaceProvider, WorkspaceProvider } from "../providers/workspace.js";
 import { computeContinuityDiff, CurrentWorkspaceState } from "./diff.js";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
 
 export interface ContinuityEngineOptions {
   memoryProvider: MemoryProvider;
   modelProvider?: ModelProvider;
+  workspaceProvider?: WorkspaceProvider;
+}
+
+export interface ParkWorkspaceOptions {
+  workspacePath: string;
+  goalText?: string;
+  stateSummary?: string;
+  actorId?: string;
+  threadId?: string;
+  activeHypothesis?: string;
+  nextActionDescription?: string;
+  assumptions?: Array<{ id?: string; statement: string; target_artifact?: string }>;
+  decisions?: Array<{ id?: string; description: string; rationale: string; assumptions?: string[] }>;
+}
+
+export interface ResumeWorkspaceOptions {
+  threadId: string;
+  workspacePath: string;
 }
 
 /**
@@ -24,10 +45,12 @@ export interface ContinuityEngineOptions {
 export class ContinuityEngine {
   private memory: MemoryProvider;
   private model?: ModelProvider;
+  private workspace: WorkspaceProvider;
 
   constructor(options: ContinuityEngineOptions) {
     this.memory = options.memoryProvider;
     this.model = options.modelProvider;
+    this.workspace = options.workspaceProvider || new LocalGitWorkspaceProvider();
   }
 
   /**
@@ -85,6 +108,179 @@ export class ContinuityEngine {
       throw new CheckpointNotFoundError(checkpointId);
     }
     return computeContinuityDiff(checkpoint, currentState);
+  }
+
+  /**
+   * REAL PARK: Inspects a real local Git repository and creates an evidence-backed checkpoint
+   */
+  async parkWorkspace(options: ParkWorkspaceOptions): Promise<CognitiveCheckpoint> {
+    const snapshot = await this.workspace.captureSnapshot(options.workspacePath);
+    const repoName = path.basename(snapshot.repository_root);
+    const threadId = options.threadId || `thread-${repoName}`;
+    const actorId = options.actorId || "developer";
+    const checkpointId = `cp-${randomUUID().slice(0, 8)}`;
+
+    const goalText =
+      options.goalText || `Continue work on ${repoName} (${snapshot.branch})`;
+
+    const stateSummary =
+      options.stateSummary ||
+      (snapshot.is_clean
+        ? `Clean working tree on branch '${snapshot.branch}' at commit ${snapshot.head_commit.short_hash}: "${snapshot.head_commit.message}".`
+        : `Active work in progress on branch '${snapshot.branch}' with ${snapshot.file_statuses.length} modified file(s).`);
+
+    const evidenceList = [...snapshot.evidence];
+
+    // Build decisions
+    const decisions: Decision[] = [];
+    if (options.decisions && options.decisions.length > 0) {
+      options.decisions.forEach((d, idx) => {
+        decisions.push({
+          id: d.id || `dec-${idx + 1}`,
+          description: d.description,
+          rationale: d.rationale,
+          status: "active",
+          assumptions: d.assumptions || ["asm-git-branch"],
+          evidence_ids: ["ev-git-status"]
+        });
+      });
+    } else if (!snapshot.is_clean) {
+      const topFile = snapshot.file_statuses[0]?.path || "workspace";
+      decisions.push({
+        id: "dec-active-work",
+        description: `Working tree modified in ${topFile} reflects active investigation`,
+        rationale: "Uncommitted local changes observed in Git working tree",
+        status: "active",
+        assumptions: ["asm-git-branch"],
+        evidence_ids: ["ev-git-status"]
+      });
+    } else {
+      decisions.push({
+        id: "dec-clean-base",
+        description: `Current base is commit ${snapshot.head_commit.short_hash}`,
+        rationale: `Working tree is clean; HEAD message: "${snapshot.head_commit.message}"`,
+        status: "active",
+        assumptions: ["asm-git-branch"],
+        evidence_ids: ["ev-git-head"]
+      });
+    }
+
+    // Build assumptions
+    const assumptions = [];
+    if (options.assumptions && options.assumptions.length > 0) {
+      options.assumptions.forEach((a, idx) => {
+        assumptions.push({
+          id: a.id || `asm-${idx + 1}`,
+          statement: a.statement,
+          status: "active" as const,
+          target_artifact_id: a.target_artifact ? `art-${a.target_artifact.replace(/[/\\.]/g, "-")}` : undefined,
+          evidence_ids: ["ev-git-branch"]
+        });
+      });
+    } else {
+      const topArtifact = snapshot.artifacts[0];
+      assumptions.push({
+        id: "asm-git-branch",
+        statement: `Active branch '${snapshot.branch}' and HEAD ${snapshot.head_commit.short_hash} remain the baseline for current task`,
+        status: "active" as const,
+        target_artifact_id: topArtifact?.id,
+        evidence_ids: ["ev-git-branch"]
+      });
+    }
+
+    // Build next actions
+    const nextActions = [];
+    if (options.nextActionDescription) {
+      nextActions.push({
+        id: "na-user-next",
+        description: options.nextActionDescription,
+        priority: "immediate" as const,
+        rationale: "Explicit next action specified by user prior to interruption.",
+        target_artifact: snapshot.file_statuses[0]?.path,
+        evidence_ids: ["ev-git-status"]
+      });
+    } else if (!snapshot.is_clean) {
+      const topFile = snapshot.file_statuses[0].path;
+      nextActions.push({
+        id: "na-inspect-dirty",
+        description: `Review uncommitted changes in ${topFile} and verify tests`,
+        priority: "immediate" as const,
+        rationale: "Resume active work on uncommitted local modifications.",
+        target_artifact: topFile,
+        evidence_ids: ["ev-git-status"]
+      });
+    } else {
+      nextActions.push({
+        id: "na-clean-continue",
+        description: `Proceed with implementation on branch ${snapshot.branch}`,
+        priority: "immediate" as const,
+        rationale: "Clean working tree on HEAD commit.",
+        evidence_ids: ["ev-git-head"]
+      });
+    }
+
+    const checkpoint: CognitiveCheckpoint = {
+      checkpoint_id: checkpointId,
+      thread_id: threadId,
+      actor_id: actorId,
+      created_at: snapshot.captured_at,
+      goal: {
+        text: goalText,
+        success_criteria: [],
+        evidence_ids: ["ev-git-head"]
+      },
+      state_summary: stateSummary,
+      work_context: {
+        project_name: repoName,
+        workspace_root: snapshot.repository_root,
+        branch: snapshot.branch,
+        active_file: snapshot.file_statuses[0]?.path
+      },
+      evidence: evidenceList,
+      attempts: [],
+      decisions,
+      artifacts: snapshot.artifacts,
+      assumptions,
+      blockers: [],
+      open_questions: [],
+      next_actions: nextActions,
+      uncertainties: []
+    };
+
+    return this.park(checkpoint);
+  }
+
+  /**
+   * REAL RESUME: Inspects the real local Git repository, compares against stored checkpoint,
+   * detects changes, stale assumptions, and returns a grounded resume brief.
+   */
+  async resumeWorkspace(options: ResumeWorkspaceOptions): Promise<ResumeBrief> {
+    const snapshot = await this.workspace.captureSnapshot(options.workspacePath);
+    const currentState: CurrentWorkspaceState = {
+      timestamp: snapshot.captured_at,
+      git_branch: snapshot.branch,
+      git_status: snapshot.is_clean
+        ? "clean"
+        : snapshot.file_statuses.map((f) => `${f.staged ? "S" : "U"} ${f.path}`).join("; "),
+      artifacts: snapshot.artifacts,
+      evidence: snapshot.evidence
+    };
+    return this.resume(options.threadId, currentState);
+  }
+
+  /**
+   * REAL COMPARE: Inspects current Git state and compares against a specific historical checkpoint
+   */
+  async compareWorkspace(checkpointId: string, workspacePath: string): Promise<ContinuityDiff> {
+    const snapshot = await this.workspace.captureSnapshot(workspacePath);
+    const currentState: CurrentWorkspaceState = {
+      timestamp: snapshot.captured_at,
+      git_branch: snapshot.branch,
+      git_status: snapshot.is_clean ? "clean" : "dirty",
+      artifacts: snapshot.artifacts,
+      evidence: snapshot.evidence
+    };
+    return this.compareCurrentState(checkpointId, currentState);
   }
 
   /**
