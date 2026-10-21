@@ -29,14 +29,21 @@ This document records all cloud invocation activity, token usage, and cost dimen
 * **Total Live Invocations:** 3
 * **Total Cumulative Input Tokens:** 937
 * **Total Cumulative Output Tokens:** 729
-* **Estimated Incurred Cost:** < $0.0005 (Fractions of one cent, covered by active $270 promotional credits)
+* **Estimated Incurred Cost:** Usage intentionally minimal; exact billed consumption pending AWS billing settlement (ThreadKeeper hackathon credit allowance: $150; project spend limit: $20)
 * **Settled Incurred Cost:** Pending AWS Billing Console cycle settlement
 
 ---
 
 ## Standing Cloud Resources
 
-* **Persistent Resources:** None (0)
-* **Hourly Infrastructure Cost:** $0.00/hour
-* **AgentCore Memory Resources:** None (Planned Milestone 3B)
+* **Persistent Resources:** Exactly One (1)
+  - **Resource Name:** `ThreadKeeperHackathonMemory`
+  - **Resource ID:** `ThreadKeeperHackathonMemory-KkM33n8BE1`
+  - **Resource ARN:** `arn:aws:bedrock-agentcore:ap-southeast-2:175488706501:memory/ThreadKeeperHackathonMemory-KkM33n8BE1`
+  - **Region:** `ap-southeast-2`
+  - **Retention:** 7-day event expiry
+  - **Hourly Infrastructure Cost:** $0.00/hour. No always-on compute infrastructure was provisioned. Usage remains intentionally minimal. Exact billed consumption will be confirmed after AWS billing settles.
+* **AgentCore Memory Architecture:**
+  - **Native AgentCore Long-Term Semantic Memory:** NOT ENABLED (no strategy configured to avoid IAM execution roles and unnecessary background compute)
+  - **ThreadKeeper Cross-Session Discovery:** IMPLEMENTED (provider-level discovery over AgentCore short-term event/session storage)
 * **AgentCore Gateway Resources:** None (Planned Milestone 3C)

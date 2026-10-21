@@ -47,6 +47,10 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Demo fixture repositories (Milestone 4)
+.demo_fixture_repo/
+.demo_repo/
+
 # Optional npm cache directory
 .npm
 

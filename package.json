@@ -17,7 +17,13 @@
     "verify:mcp": "tsc && node dist/cli/mcp-client.js",
     "verify:web": "tsc && node dist/cli/verify-web.js",
     "verify:workspace": "tsc && node dist/cli/verify-workspace.js",
-    "verify:bedrock": "tsc && node dist/cli/verify-bedrock.js"
+    "verify:bedrock": "tsc && node dist/cli/verify-bedrock.js",
+    "verify:memory": "tsc && node dist/cli/verify-memory.js",
+    "verify:demo": "tsc && node dist/cli/verify-demo.js",
+    "demo:setup": "tsc && node dist/cli/demo-fixture.js setup",
+    "demo:park": "tsc && node dist/cli/demo-fixture.js park",
+    "demo:interrupt": "tsc && node dist/cli/demo-fixture.js interrupt",
+    "demo:resume": "tsc && node dist/cli/demo-fixture.js resume"
   },
   "repository": {
     "type": "git",
@@ -32,6 +38,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-bedrock-agentcore": "^3.1154.0",
     "@aws-sdk/client-bedrock-runtime": "^3.1152.0",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "cors": "^2.8.6",

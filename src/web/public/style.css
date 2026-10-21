@@ -491,3 +491,223 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Alexa Conversational Card & Chips */
+.alexa-input-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.alexa-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.alexa-input-row input {
+  flex: 1;
+  background-color: #0d1117;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.alexa-input-row input:focus {
+  border-color: var(--border-focus);
+}
+
+.alexa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  background-color: var(--bg-highlight);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  background-color: var(--border-focus);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+/* Stepper Title Row */
+.stepper-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.judge-stepper {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(20, 26, 36, 0.9) 100%);
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+/* THEN vs NOW Grid */
+.then-now-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .then-now-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.then-now-column {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+}
+
+.then-card {
+  border-top: 3px solid var(--color-info);
+}
+
+.now-card {
+  border-top: 3px solid var(--color-danger);
+}
+
+.col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.col-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.state-detail-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.detail-val {
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Assessment Container */
+.assessment-container {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.assessment-header {
+  margin-bottom: 14px;
+}
+
+.assessment-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.assessment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .assessment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assessment-card {
+  background-color: #0d1117;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.card-observed {
+  border-left: 3px solid var(--color-info);
+}
+
+.card-derived {
+  border-left: 3px solid var(--color-warning);
+}
+
+.card-inferred {
+  border-left: 3px solid #a855f7;
+}
+
+.card-unknown {
+  border-left: 3px solid var(--text-dim);
+}
+
+.assessment-card .card-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.assessment-list {
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.assessment-list li {
+  margin-bottom: 6px;
+  position: relative;
+  padding-left: 14px;
+}
+
+.assessment-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--text-dim);
+}

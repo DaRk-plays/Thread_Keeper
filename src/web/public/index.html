@@ -17,13 +17,13 @@
         <div class="brand-logo">TK</div>
         <div>
           <h1>ThreadKeeper</h1>
-          <p class="tagline">The continuity layer for human attention &bull; Alexa+ Hackathon</p>
+          <p class="tagline">The continuity layer for human attention &bull; Alexa+ Hackathon 2026</p>
         </div>
       </div>
       <div class="header-badges">
         <span class="badge badge-success"><span class="dot"></span> Local Runtime Active</span>
         <span class="badge badge-info">MCP 2025-11-25+ (Streamable HTTP)</span>
-        <span class="badge badge-neutral">No AWS (Zero-Cost Local)</span>
+        <span class="badge badge-neutral">Region: ap-southeast-2</span>
       </div>
     </header>
 
@@ -32,41 +32,72 @@
       <!-- Left Column: Ambient Voice & Scenario Actions -->
       <section class="panel voice-panel">
         <div class="panel-header">
-          <h2>Ambient Voice &amp; Demo Controls</h2>
-          <span class="subtext">Simulating Alexa+ Conversational Surface</span>
+          <h2>Ambient Alexa+ Voice &amp; Demo Controls</h2>
+          <span class="subtext">Simulating Alexa+ Conversational Surface &amp; Continuity Engine</span>
         </div>
 
-        <div class="voice-actions">
-          <button id="btn-alexa-park" class="btn btn-primary">
-            <span class="btn-icon">🎙️</span> "Alexa, park this"
-          </button>
-          <button id="btn-alexa-resume" class="btn btn-secondary">
-            <span class="btn-icon">⚡</span> "Alexa, resume my thread"
-          </button>
+        <!-- Conversational Alexa Command Bar -->
+        <div class="alexa-input-card">
+          <div class="card-label">🎙️ Ask Alexa+ Continuity Agent</div>
+          <div class="alexa-input-row">
+            <input id="input-alexa-command" type="text" placeholder="e.g. 'Alexa, where was I?' or 'Alexa, what changed?'" />
+            <button id="btn-alexa-send" class="btn btn-primary">Ask</button>
+          </div>
+          <div class="alexa-chips">
+            <button class="chip" data-cmd="Alexa, park this.">🎙️ "Alexa, park this."</button>
+            <button class="chip" data-cmd="Alexa, where was I?">⚡ "Alexa, where was I?"</button>
+            <button class="chip" data-cmd="Alexa, what changed?">🔍 "Alexa, what changed?"</button>
+            <button class="chip" data-cmd="Alexa, what should I do next?">🎯 "Alexa, what should I do next?"</button>
+            <button class="chip" data-cmd="Alexa, why is that assumption stale?">⚠️ "Alexa, why is that assumption stale?"</button>
+          </div>
         </div>
 
-        <div class="scenario-stepper">
-          <h3>Deterministic Seeded Scenario</h3>
+        <!-- 1-Touch Judge-Ready Demo Stepper -->
+        <div class="scenario-stepper judge-stepper">
+          <div class="stepper-title-row">
+            <h3>Judge-Ready End-to-End Demo</h3>
+            <span id="demo-stage-badge" class="badge badge-outline">Stage: Idle</span>
+          </div>
+          <p class="scenario-desc">Cross-process restart with Git mutation &amp; Amazon Nova Lite</p>
+          <div class="stepper-buttons">
+            <button id="btn-demo-setup" class="btn-step">
+              <span class="step-num">1</span> Setup Git Fixture
+            </button>
+            <button id="btn-demo-park" class="btn-step">
+              <span class="step-num">2</span> Alexa, Park This
+            </button>
+            <button id="btn-demo-interrupt" class="btn-step">
+              <span class="step-num">3</span> Simulate Interruption
+            </button>
+            <button id="btn-demo-resume" class="btn-step">
+              <span class="step-num">4</span> Alexa, Where Was I?
+            </button>
+          </div>
+        </div>
+
+        <!-- Legacy Seeded Scenario & Workspace Inputs (Maintained for Backward Compatibility) -->
+        <div class="scenario-stepper" style="margin-top: 14px;">
+          <h3>Deterministic Seeded Scenario (Invoice Filter)</h3>
           <p class="scenario-desc">Debugging invoice status filtering on billing dashboard</p>
           <div class="stepper-buttons">
             <button id="btn-step-1" class="btn-step">
               <span class="step-num">1</span> Park Initial Bug State
             </button>
             <button id="btn-step-2" class="btn-step">
-              <span class="step-num">2</span> Simulate Interruption &amp; Teammate Commit
+              <span class="step-num">2</span> Simulate Interruption
             </button>
             <button id="btn-step-3" class="btn-step">
-              <span class="step-num">3</span> Resume &amp; Compute Continuity Diff
+              <span class="step-num">3</span> Resume &amp; Diff
             </button>
             <button id="btn-step-4" class="btn-step">
-              <span class="step-num">4</span> Export Agent Handoff Packet
+              <span class="step-num">4</span> Export Agent Handoff
             </button>
           </div>
         </div>
 
         <div class="scenario-stepper" style="margin-top: 14px;">
-          <h3>Real Git Workspace Continuity</h3>
-          <p class="scenario-desc">Inspect real repository &amp; detect uncommitted changes</p>
+          <h3>Real Git Workspace Inspector</h3>
+          <p class="scenario-desc">Inspect arbitrary local repository &amp; track changes</p>
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
             <input id="input-workspace-path" type="text" placeholder="/path/to/local/git/repo" style="flex:1; background:#0d1117; border:1px solid var(--border-subtle); color:white; padding:8px 10px; border-radius:6px; font-family:var(--font-mono); font-size:12px;" />
           </div>
@@ -82,9 +113,12 @@
 
         <!-- 30-Second Voice Brief Output Box -->
         <div class="voice-transcript-card">
-          <div class="card-label">🔊 Alexa+ 30-Second Spoken Brief</div>
+          <div class="card-header-flex">
+            <div class="card-label">🔊 Alexa+ Spoken Response</div>
+            <div id="voice-badges" class="header-badges"></div>
+          </div>
           <div id="voice-brief-text" class="voice-text">
-            "Ready. Click 'Park Initial Bug State' or 'Alexa, park this' to capture your working thread."
+            "Ready. Click 'Setup Git Fixture' or ask 'Alexa, where was I?' to begin continuity inspection."
           </div>
         </div>
 
@@ -98,21 +132,124 @@
           </div>
           <div id="next-action-rationale" class="action-rationale"></div>
         </div>
+
+        <!-- Hidden legacy buttons for event listener compatibility -->
+        <div style="display:none;">
+          <button id="btn-alexa-park">Park</button>
+          <button id="btn-alexa-resume">Resume</button>
+        </div>
       </section>
 
       <!-- Right Column: Checkpoint & Continuity Diff Inspector -->
       <section class="panel inspector-panel">
         <div class="panel-header">
-          <h2>Cognitive State &amp; Continuity Diff</h2>
+          <h2>Cognitive State &amp; Continuity Console</h2>
           <div class="tab-pills">
-            <button class="pill active" data-tab="diff">Continuity Diff</button>
+            <button class="pill active" data-tab="then-now">THEN vs NOW &amp; Assessment</button>
+            <button class="pill" data-tab="diff">Continuity Diff</button>
             <button class="pill" data-tab="checkpoint">Cognitive Checkpoint</button>
             <button class="pill" data-tab="handoff">Agent Handoff</button>
           </div>
         </div>
 
+        <!-- Tab 0: Prominent THEN vs NOW & Assessment -->
+        <div id="tab-then-now" class="tab-content active">
+          <!-- Comparison Grid -->
+          <div class="then-now-grid">
+            <!-- THEN State -->
+            <div class="then-now-column then-card">
+              <div class="col-header">
+                <h3>⏪ THEN (Captured Context)</h3>
+                <span id="then-badge" class="badge badge-info">Baseline</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Goal:</span>
+                <span id="then-goal" class="detail-val">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Active Assumption:</span>
+                <span id="then-assumption" class="detail-val text-warning">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Relevant Decision:</span>
+                <span id="then-decision" class="detail-val">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Checkpoint:</span>
+                <span id="then-checkpoint-id" class="detail-val font-mono">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Baseline Evidence:</span>
+                <span id="then-evidence-hash" class="detail-val font-mono">--</span>
+              </div>
+            </div>
+
+            <!-- NOW State -->
+            <div class="then-now-column now-card">
+              <div class="col-header">
+                <h3>⏩ NOW (Current Reality)</h3>
+                <span id="now-badge" class="badge badge-warning">Needs Review</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Changed Artifacts:</span>
+                <span id="now-changed-files" class="detail-val font-mono text-danger">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Assumption Status:</span>
+                <span id="now-assumption-status" class="detail-val text-danger">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Invalidation Trail:</span>
+                <span id="now-invalidation-reason" class="detail-val">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Current Evidence:</span>
+                <span id="now-evidence-hash" class="detail-val font-mono">--</span>
+              </div>
+              <div class="state-detail-row">
+                <span class="detail-label">Continuity Delta:</span>
+                <span id="now-delta-summary" class="detail-val">--</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ThreadKeeper Epistemic Assessment -->
+          <div class="assessment-container">
+            <div class="assessment-header">
+              <h3>🧠 ThreadKeeper Grounded Assessment</h3>
+              <span class="subtext">Strict separation of verified facts from derived interpretation and unknowns</span>
+            </div>
+            <div class="assessment-grid">
+              <div class="assessment-card card-observed">
+                <div class="card-title">👁️ Observed Facts (Direct Evidence)</div>
+                <ul id="assessment-observed" class="assessment-list">
+                  <li>Awaiting observation...</li>
+                </ul>
+              </div>
+              <div class="assessment-card card-derived">
+                <div class="card-title">📐 Derived Knowledge (Evaluated Diff)</div>
+                <ul id="assessment-derived" class="assessment-list">
+                  <li>Awaiting derivation...</li>
+                </ul>
+              </div>
+              <div class="assessment-card card-inferred">
+                <div class="card-title">💡 Inferred Context (Semantic Interpretation)</div>
+                <ul id="assessment-inferred" class="assessment-list">
+                  <li>Awaiting inference...</li>
+                </ul>
+              </div>
+              <div class="assessment-card card-unknown">
+                <div class="card-title">❓ Unknowns (Grounding Boundaries)</div>
+                <ul id="assessment-unknown" class="assessment-list">
+                  <li>Awaiting grounding check...</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab 1: Continuity Diff -->
-        <div id="tab-diff" class="tab-content active">
+        <div id="tab-diff" class="tab-content">
           <!-- Summary Metrics -->
           <div class="diff-metrics">
             <div class="metric-card metric-danger">
@@ -182,7 +319,7 @@
             <h3>Standardized Lossless Handoff Packet</h3>
             <p class="subtext">Ready for handoff to a colleague or autonomous coding agent</p>
           </div>
-          <pre id="handoff-json" class="json-viewer">// Click 'Export Agent Handoff Packet' to view context packet</pre>
+          <pre id="handoff-json" class="json-viewer">// Click 'Export Agent Handoff' to view context packet</pre>
         </div>
       </section>
     </main>

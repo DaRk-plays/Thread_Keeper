@@ -63,3 +63,17 @@ export class ModelConfigurationError extends ThreadKeeperError {
     this.name = "ModelConfigurationError";
   }
 }
+
+export class MemoryConfigurationError extends ThreadKeeperError {
+  constructor(message: string, details?: unknown) {
+    super(message, "MEMORY_CONFIGURATION_ERROR", details);
+    this.name = "MemoryConfigurationError";
+  }
+}
+
+export class MemoryOperationError extends ThreadKeeperError {
+  constructor(message: string, details?: unknown) {
+    super(message, "MEMORY_OPERATION_ERROR", details);
+    this.name = "MemoryOperationError";
+  }
+}

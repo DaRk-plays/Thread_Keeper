@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { ContinuityEngine } from "../engine/continuity.js";
-import { LocalMemoryProvider } from "../providers/memory.js";
-import { FixtureModelProvider } from "../providers/model.js";
+import { LocalMemoryProvider, createMemoryProvider } from "../providers/memory.js";
+import { FixtureModelProvider, createModelProvider } from "../providers/model.js";
 import { createThreadKeeperMcpServer } from "../mcp/server.js";
 import {
   getInterruptedWorkspaceState,
@@ -15,6 +15,14 @@ import {
 } from "../scenario/seeded.js";
 import { CurrentWorkspaceState } from "../engine/diff.js";
 import { LocalGitWorkspaceProvider } from "../providers/workspace.js";
+import { AlexaDispatcher } from "../alexa/dispatcher.js";
+import {
+  setupDemoFixture,
+  parkDemo,
+  interruptDemo,
+  resumeDemo,
+  loadDemoState
+} from "../cli/demo-fixture.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,9 +32,26 @@ export function createServer(customEngine?: ContinuityEngine) {
   app.use(cors());
 
   // Memory & Engine setup
-  const memoryProvider = new LocalMemoryProvider();
-  const modelProvider = new FixtureModelProvider();
-  const engine = customEngine || new ContinuityEngine({ memoryProvider, modelProvider });
+  let memoryProvider;
+  try {
+    memoryProvider = createMemoryProvider();
+  } catch {
+    memoryProvider = new LocalMemoryProvider();
+  }
+  let modelProvider;
+  try {
+    modelProvider = createModelProvider();
+  } catch {
+    modelProvider = new FixtureModelProvider();
+  }
+  const workspaceProvider = new LocalGitWorkspaceProvider();
+  const engine = customEngine || new ContinuityEngine({ memoryProvider, modelProvider, workspaceProvider });
+
+  const alexaDispatcher = new AlexaDispatcher({
+    engine,
+    memoryProvider,
+    workspaceProvider
+  });
 
   // Setup MCP Streamable HTTP transport
   const mcpServer = createThreadKeeperMcpServer(engine);
@@ -192,7 +217,82 @@ export function createServer(customEngine?: ContinuityEngine) {
     }
   });
 
-  return { app, engine, memoryProvider, mcpServer, mcpTransport };
+  // Alexa+ Conversational Command Dispatcher
+  app.post("/api/alexa/command", async (req, res) => {
+    try {
+      const { command, threadId, workspacePath } = req.body;
+      if (!command || typeof command !== "string") {
+        res.status(400).json({ status: "error", message: "Missing command field" });
+        return;
+      }
+      const response = await alexaDispatcher.execute({
+        command,
+        threadId,
+        workspacePath
+      });
+      res.json({ status: "success", response });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  // Demo Fixture Endpoints (Judge-Ready Interactive Stepper)
+  app.get("/api/demo/status", (_req, res) => {
+    try {
+      const state = loadDemoState();
+      res.json({ status: "success", demo_state: state });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  app.post("/api/demo/setup", async (_req, res) => {
+    try {
+      await setupDemoFixture();
+      const state = loadDemoState();
+      res.json({ status: "success", message: "Demo fixture initialized", demo_state: state });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  app.post("/api/demo/park", async (_req, res) => {
+    try {
+      const response = await parkDemo();
+      const state = loadDemoState();
+      res.json({ status: "success", response, demo_state: state });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  app.post("/api/demo/interrupt", async (_req, res) => {
+    try {
+      await interruptDemo();
+      const state = loadDemoState();
+      res.json({ status: "success", message: "Interruption mutation applied", demo_state: state });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  app.post("/api/demo/resume", async (_req, res) => {
+    try {
+      const response = await resumeDemo();
+      const state = loadDemoState();
+      res.json({ status: "success", response, demo_state: state });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ status: "error", message: msg });
+    }
+  });
+
+  return { app, engine, memoryProvider, mcpServer, mcpTransport, alexaDispatcher };
 }
 
 // Start server if executed directly

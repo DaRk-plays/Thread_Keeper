@@ -59,7 +59,8 @@ const SENSITIVE_PATTERNS = [
   /\.p12$/i,
   /\.kdbx$/i,
   /credentials\.json$/i,
-  /secret/i
+  /secret/i,
+  /^\.threadkeeper/i
 ];
 
 function isSensitivePath(filePath: string): boolean {

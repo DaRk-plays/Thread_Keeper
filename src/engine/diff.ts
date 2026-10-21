@@ -256,9 +256,23 @@ export function computeContinuityDiff(
       }
     }
 
+    let domainSpecificInstruction = "inspect the changed implementation";
+    const lowerFile = changedFile.toLowerCase();
+    const lowerStale = (primaryStale?.statement || "").toLowerCase();
+
+    if (lowerFile.includes("payment") || lowerStale.includes("currency")) {
+      domainSpecificInstruction = "inspect the changed currency-validation logic";
+    } else if (lowerFile.includes("invoice") || lowerStale.includes("invoice") || lowerStale.includes("filter")) {
+      domainSpecificInstruction = "inspect the changed invoice-filtering logic";
+    } else if (lowerFile.includes("database") || lowerFile.includes("pool") || lowerStale.includes("pool")) {
+      domainSpecificInstruction = "inspect the changed connection pool configuration";
+    } else if (lowerFile.includes("auth") || lowerStale.includes("token") || lowerStale.includes("auth")) {
+      domainSpecificInstruction = "inspect the changed authentication flow";
+    }
+
     recommended_next_action = {
       id: `na-grounded-${Date.now()}`,
-      description: `Re-evaluate assumption for ${changedFile} and inspect changed mapping before proceeding.`,
+      description: `Re-evaluate assumption for ${changedFile} and ${domainSpecificInstruction} before proceeding.`,
       priority: "immediate",
       rationale: `Underlying state changed while away: ${changed.map((c) => c.path).join(", ")}. Prior assumption '${primaryStale ? primaryStale.statement : "active"}' is stale.`,
       target_artifact: changedFile,

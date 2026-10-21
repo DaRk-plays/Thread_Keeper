@@ -79,4 +79,25 @@ describe("Web Server & REST Runtime Verification (Gate 1)", () => {
     expect(data.handoff.format_version).toBe("1.0.0");
     expect(data.handoff.objective).toContain("Fix invoice filtering");
   });
+
+  it("handles Alexa+ conversational commands via /api/alexa/command", async () => {
+    const res = await fetch(`${baseUrl}/api/alexa/command`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "Alexa, where was I?", threadId: "thread-invoice-filtering" })
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe("success");
+    expect(data.response.intent).toBe("where_was_i");
+    expect(data.response.spoken_response).toBeDefined();
+    expect(data.response.badges).toBeInstanceOf(Array);
+  });
+
+  it("queries demo fixture status via /api/demo/status", async () => {
+    const res = await fetch(`${baseUrl}/api/demo/status`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe("success");
+  });
 });
