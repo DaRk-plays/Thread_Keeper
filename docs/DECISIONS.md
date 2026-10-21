@@ -80,6 +80,15 @@ Implement `LocalGitWorkspaceProvider` using Node's `child_process.execFile` (not
 
 **Consequences:** Guarantees user repositories are never mutated or leaked, while providing high-fidelity workspace state inspection, dirty file detection, and diff computation for real interruptions.
 
+## D-011 — BedrockModelProvider with strict grounding contract and deterministic fallback
+
+**Date:** 2026-10-18
+**Status:** Accepted
+
+Implement `BedrockModelProvider` targeting Amazon Nova Lite (`amazon.nova-lite-v1:0`) in `ap-southeast-2` using the AWS SDK for JavaScript v3 Bedrock Converse API. Provider selection is strictly explicit via `THREADKEEPER_MODEL_PROVIDER` (defaulting to `local`), ensuring credential presence never silently triggers paid Bedrock calls. The model output is governed by a strict structured grounding contract (`observed_facts`, `derived_assessment`, `interpretation`, `unknowns`, `recommended_next_action`) validated with Zod and referential integrity checks (every cited evidence ID must exist in supplied evidence; observed facts must be grounded; speculative bug-fix claims are rejected). Deterministic Continuity Diff and next actions remain the authoritative source of truth. Any Bedrock invocation failure, schema violation, or hallucination falls back safely and gracefully to deterministic behavior.
+
+**Consequences:** Enables competition-grade semantic reasoning without risking ungrounded hallucinations, runaway cloud bills, or breaking offline testability (all normal test suites use mocks; live verification is restricted to explicit runs).
+
 ## Decision template
 
 ```markdown

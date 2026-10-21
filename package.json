@@ -16,7 +16,8 @@
     "demo": "tsc && node dist/cli/demo.js",
     "verify:mcp": "tsc && node dist/cli/mcp-client.js",
     "verify:web": "tsc && node dist/cli/verify-web.js",
-    "verify:workspace": "tsc && node dist/cli/verify-workspace.js"
+    "verify:workspace": "tsc && node dist/cli/verify-workspace.js",
+    "verify:bedrock": "tsc && node dist/cli/verify-bedrock.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1152.0",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "cors": "^2.8.6",
     "express": "^5.3.0",

@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  GroundedReasoningResponseSchema
+} from "./grounding.js";
+
+export * from "./grounding.js";
 
 /**
  * Epistemic status of an evidence item
@@ -203,7 +208,14 @@ export const ResumeBriefSchema = z.object({
   grounded_next_action: NextActionSchema,
   last_decision: DecisionSchema.optional(),
   stale_assumption_count: z.number(),
-  changed_artifact_count: z.number()
+  changed_artifact_count: z.number(),
+  semantic_interpretation: GroundedReasoningResponseSchema.optional(),
+  model_usage: z.object({
+    model_id: z.string(),
+    input_tokens: z.number(),
+    output_tokens: z.number(),
+    latency_ms: z.number().optional()
+  }).optional()
 });
 export type ResumeBrief = z.infer<typeof ResumeBriefSchema>;
 

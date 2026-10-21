@@ -42,3 +42,24 @@ export class ProviderUnavailableError extends ThreadKeeperError {
     this.name = "ProviderUnavailableError";
   }
 }
+
+export class GroundingValidationError extends ThreadKeeperError {
+  constructor(message: string, details?: unknown) {
+    super(message, "GROUNDING_VALIDATION_ERROR", details);
+    this.name = "GroundingValidationError";
+  }
+}
+
+export class ModelInvocationError extends ThreadKeeperError {
+  constructor(message: string, details?: unknown) {
+    super(message, "MODEL_INVOCATION_ERROR", details);
+    this.name = "ModelInvocationError";
+  }
+}
+
+export class ModelConfigurationError extends ThreadKeeperError {
+  constructor(message: string, details?: unknown) {
+    super(message, "MODEL_CONFIGURATION_ERROR", details);
+    this.name = "ModelConfigurationError";
+  }
+}

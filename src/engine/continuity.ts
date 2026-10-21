@@ -3,7 +3,12 @@ import {
   ContinuityDiff,
   Decision,
   HandoffPacket,
-  ResumeBrief
+  ResumeBrief,
+  GroundedReasoningResponse,
+  GroundedReasoningResponseSchema,
+  buildGroundingPrompt,
+  validateGroundedReasoning,
+  THREADKEEPER_GROUNDING_SYSTEM_PROMPT
 } from "../domain/types.js";
 import { CheckpointNotFoundError } from "../domain/errors.js";
 import { validateCheckpoint, validateHandoffPacket, validateResumeBrief } from "../domain/validation.js";
@@ -72,14 +77,73 @@ export class ContinuityEngine {
       throw new CheckpointNotFoundError(`No checkpoint found for thread '${threadId}'`);
     }
 
+    // 1. DETERMINISTIC EVIDENCE & CONTINUITY DIFF (Authoritative Truth)
     const diff = computeContinuityDiff(checkpoint, currentState);
     const lastDecision: Decision | undefined =
       checkpoint.decisions.length > 0
         ? checkpoint.decisions[checkpoint.decisions.length - 1]
         : undefined;
 
+    // 2. OPTIONAL SEMANTIC GROUNDED REASONING VIA MODEL PROVIDER
+    let semanticInterpretation: GroundedReasoningResponse | undefined;
+    let modelUsage: ResumeBrief["model_usage"] | undefined;
+
+    if (this.model && (diff.changed.length > 0 || diff.stale_assumptions.length > 0)) {
+      try {
+        const allowedEvidenceIds = new Set<string>();
+        for (const ev of checkpoint.evidence) allowedEvidenceIds.add(ev.id);
+        for (const ev of currentState.evidence) allowedEvidenceIds.add(ev.id);
+        for (const ch of diff.changed) allowedEvidenceIds.add(ch.artifact_id);
+        for (const sa of diff.stale_assumptions) {
+          if (sa.invalidating_evidence) allowedEvidenceIds.add(sa.invalidating_evidence.id);
+        }
+
+        const observedFacts: Array<{ evidence_id: string; fact: string }> = [];
+        for (const ch of diff.changed) {
+          observedFacts.push({
+            evidence_id: ch.artifact_id,
+            fact: `${ch.path} changed while the user was away.`
+          });
+        }
+
+        const previousAssumptions = diff.stale_assumptions.map((sa) => ({
+          statement: sa.statement
+        }));
+
+        const userPrompt = buildGroundingPrompt(observedFacts, previousAssumptions);
+
+        const candidate = await this.model.generateStructured<GroundedReasoningResponse>({
+          systemPrompt: THREADKEEPER_GROUNDING_SYSTEM_PROMPT,
+          userPrompt,
+          schema: GroundedReasoningResponseSchema
+        });
+
+        const allowedFactStatements = observedFacts.map((f) => f.fact);
+        const validation = validateGroundedReasoning(
+          candidate,
+          allowedEvidenceIds,
+          allowedFactStatements
+        );
+
+        if (validation.valid && validation.data) {
+          semanticInterpretation = validation.data;
+          if (this.model.lastUsage) {
+            modelUsage = {
+              model_id: this.model.lastUsage.modelId,
+              input_tokens: this.model.lastUsage.inputTokens,
+              output_tokens: this.model.lastUsage.outputTokens,
+              latency_ms: this.model.lastUsage.latencyMs
+            };
+          }
+        }
+      } catch {
+        // Safe fallback: On any model failure, schema invalidity, or timeout,
+        // Continuity Engine falls back safely to deterministic behavior without crashing.
+      }
+    }
+
     // Generate concise 30-second voice brief
-    const voice_summary = this.generateVoiceSummary(checkpoint, diff);
+    const voice_summary = this.generateVoiceSummary(checkpoint, diff, semanticInterpretation);
 
     const brief: ResumeBrief = {
       thread_id: threadId,
@@ -90,7 +154,9 @@ export class ContinuityEngine {
       grounded_next_action: diff.recommended_next_action,
       last_decision: lastDecision,
       stale_assumption_count: diff.stale_assumptions.length,
-      changed_artifact_count: diff.changed.length
+      changed_artifact_count: diff.changed.length,
+      semantic_interpretation: semanticInterpretation,
+      model_usage: modelUsage
     };
 
     return validateResumeBrief(brief);
@@ -398,7 +464,11 @@ export class ContinuityEngine {
   /**
    * Generates a 30-second conversational voice summary suitable for Alexa+
    */
-  private generateVoiceSummary(checkpoint: CognitiveCheckpoint, diff: ContinuityDiff): string {
+  private generateVoiceSummary(
+    checkpoint: CognitiveCheckpoint,
+    diff: ContinuityDiff,
+    semanticInterpretation?: GroundedReasoningResponse
+  ): string {
     const goalText = checkpoint.goal.text;
     const hasChanges = diff.changed.length > 0;
     const hasStale = diff.stale_assumptions.length > 0;
@@ -413,6 +483,9 @@ export class ContinuityEngine {
       summary += `While you were away, ${diff.changed.length} file(s) changed, `;
       if (hasStale) {
         summary += `and your assumption regarding "${diff.stale_assumptions[0].statement}" is now stale. `;
+      }
+      if (semanticInterpretation?.derived_assessment.reason) {
+        summary += `Assessment: ${semanticInterpretation.derived_assessment.reason} `;
       }
       summary += `Recommended next move: ${diff.recommended_next_action.description}`;
     } else {
