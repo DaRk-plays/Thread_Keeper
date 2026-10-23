@@ -270,7 +270,7 @@ npm start
 ThreadKeeper includes a comprehensive suite of automated verification runners:
 
 ```bash
-# 1. Run unit test suite (83 tests across 10 suites, 100% mocked offline)
+# 1. Run unit test suite (88 automated tests across 10 suites, 100% offline & deterministic)
 npm test
 
 # 2. Run TypeScript compiler typecheck
@@ -322,17 +322,30 @@ npm run demo:resume
 
 ## AWS Setup & Safety Notes
 
-### Pinned Configuration
-* **AWS Region:** `ap-southeast-2` (strictly enforced)
-* **AWS Profile:** `threadkeeper`
-* **AgentCore Memory ID:** `ThreadKeeperHackathonMemory-KkM33n8BE1`
-* **Bedrock Model ID:** `amazon.nova-lite-v1:0`
+### Deterministic Local Mode (Default & Zero-Cost)
+* ThreadKeeper defaults to **100% offline, deterministic execution** (`THREADKEEPER_MEMORY_PROVIDER=local`, `THREADKEEPER_MODEL_PROVIDER=fixture`).
+* Having AWS credentials present on your machine **NEVER silently triggers paid Bedrock or AgentCore calls**. All standard tests, local MCP operations, and web consoles run out-of-the-box without AWS access.
+
+### Optional Live AWS Cloud Mode (Evaluator-Owned)
+Judges or developers wishing to test against live AWS infrastructure can supply their own AWS environment:
+* **Region:** `ap-southeast-2` (or any Bedrock AgentCore-supported region)
+* **Model ID:** `amazon.nova-lite-v1:0` (Amazon Nova Lite via Converse API)
+* **AgentCore Memory:** Evaluator's own AgentCore Memory resource ID
+* **Configuration:**
+  ```bash
+  export AWS_REGION=ap-southeast-2
+  export AWS_PROFILE=your-profile
+  export THREADKEEPER_MEMORY_PROVIDER=agentcore
+  export THREADKEEPER_AGENTCORE_MEMORY_ID=your-agentcore-memory-id
+  export THREADKEEPER_MODEL_PROVIDER=bedrock
+  export BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
+  ```
+* Evaluators are never required or expected to access the author's private AWS account.
 
 ### Cost & Safety Contract
 * **No always-on compute infrastructure was provisioned.**
 * **Usage remains intentionally minimal.**
 * **Exact billed consumption will be confirmed after AWS billing settles.**
-* Having AWS credentials present **NEVER silently triggers paid Bedrock or AgentCore calls**. All standard tests run against deterministic local mocks (`LocalMemoryProvider`, `FixtureModelProvider`).
 
 ---
 
@@ -364,7 +377,7 @@ Thread_Keeper/
 │   ├── mcp/                 # Self-hosted MCP Server (Streamable HTTP)
 │   ├── providers/           # Provider implementations (Memory, Model, Workspace)
 │   └── web/                 # Express server & Visual Continuity Console UI
-├── tests/                   # 83 automated unit & integration tests
+├── tests/                   # 88 automated unit & integration tests
 ├── LICENSE                  # MIT License
 ├── package.json             # Scripts & dependency definitions
 └── tsconfig.json            # Strict TypeScript configuration

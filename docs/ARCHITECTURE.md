@@ -84,9 +84,9 @@ Planned adapters:
 
 | Boundary | Competition adapter | Development/fallback adapter |
 |---|---|---|
-| Model | Amazon Bedrock | deterministic fixture / optional alternative model |
+| Model | Amazon Bedrock (Nova Lite) | deterministic fixture / optional alternative model |
 | Memory | AgentCore Memory | local SQLite/in-memory fixture |
-| Tool gateway | AgentCore Gateway where valuable | direct MCP/tool calls |
+| Tool gateway | Self-hosted MCP Server (Streamable HTTP) | direct MCP/tool calls |
 | Context source | versioned workspace/Git source | fixture repository |
 
 ## Cognitive Checkpoint schema
@@ -147,9 +147,9 @@ Represent dependencies explicitly enough to demonstrate this in the winning scen
 
 Use for cross-session short/long-term continuity. Do not force it to be the canonical database for every structured artifact if deterministic storage is better elsewhere.
 
-### AgentCore Gateway
+### Tool Gateway Architecture (Self-Hosted MCP)
 
-Use where it genuinely improves tool discovery/invocation/orchestration. A direct ThreadKeeper MCP server remains essential for the chosen Alexa+ architecture and provides a fallback.
+ThreadKeeper uses a self-hosted Model Context Protocol (MCP) server over Streamable HTTP (spec `>= 2025-11-25`) as the authoritative tool execution gateway. AgentCore Gateway is not provisioned or used. A direct ThreadKeeper MCP server provides seamless local and cloud-hosted interoperability with any standard MCP client or simulated Alexa+ dispatcher.
 
 ### Bedrock
 

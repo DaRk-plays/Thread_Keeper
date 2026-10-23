@@ -128,7 +128,7 @@ Key architectural principles:
    - Fresh process starts -> user asks "Alexa, where was I?".
    - Checkpoint restored from AgentCore, Continuity Diff computed, stale assumption detected, and Nova Lite provides grounded semantic reasoning without hallucination.
 5. **Domain-Aware Recommendation Copy:** Context-sensitive recommendations replace generic placeholders with domain-specific guidance (e.g. `"Re-evaluate assumption for src/payment.ts and inspect the changed currency-validation logic before proceeding."`).
-6. **Zero Cloud Invocations in Unit Tests:** All 12 Alexa unit tests and 83 overall unit tests run in <2 seconds with 100% deterministic local mocks; live AWS testing is strictly isolated to explicit verification runners (`verify:demo`, `verify:memory`, `verify:bedrock`).
+6. **Zero Cloud Invocations in Unit Tests:** All 12 Alexa unit tests and 88 overall unit tests run in <2 seconds with 100% deterministic local mocks; live AWS testing is strictly isolated to explicit verification runners (`verify:demo`, `verify:memory`, `verify:bedrock`).
 
 **Consequences:** Produces an end-to-end, reproducible, competition-grade vertical slice for the Alexa+ Developer Hackathon 2026 with verified persistence across process restarts, strict grounding integrity, and verifiable zero-cost local testability.
 

@@ -151,3 +151,18 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Video Remotion build outputs & large intermediate artifacts
+video/remotion/node_modules/
+video/remotion/out/
+video/remotion/previews/
+video/remotion/public/audio/auditions/
+video/remotion/public/audio/preview-samantha/
+video/remotion/public/demo/park-demo.mp4
+video/remotion/public/demo/resume-demo.mp4
+

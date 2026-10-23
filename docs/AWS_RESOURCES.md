@@ -14,7 +14,7 @@ This document tracks all AWS cloud infrastructure created for ThreadKeeper.
 
 | AWS Service | Region | Resource Name | ARN / ID | Purpose | Cost Behavior | Creation Date | Deletion Procedure | Deletion Date |
 |---|---|---|---|---|---|---|---|---|
-| Amazon Bedrock AgentCore Memory | ap-southeast-2 | ThreadKeeperHackathonMemory | ARN: `arn:aws:bedrock-agentcore:ap-southeast-2:175488706501:memory/ThreadKeeperHackathonMemory-KkM33n8BE1`<br>ID: `ThreadKeeperHackathonMemory-KkM33n8BE1` | Persistent continuity memory across process restarts | No always-on compute infrastructure was provisioned. Usage remains intentionally minimal. Exact billed consumption will be confirmed after AWS billing settles (7-day event retention). | 2026-10-21 | `aws bedrock-agentcore-control delete-memory --memory-id ThreadKeeperHackathonMemory-KkM33n8BE1 --profile threadkeeper --region ap-southeast-2` | Active |
+| Amazon Bedrock AgentCore Memory | ap-southeast-2 | ThreadKeeperHackathonMemory | ARN: `arn:aws:bedrock-agentcore:ap-southeast-2:<AWS_ACCOUNT_ID>:memory/ThreadKeeperHackathonMemory-KkM33n8BE1`<br>ID: `ThreadKeeperHackathonMemory-KkM33n8BE1` | Persistent continuity memory across process restarts | No always-on compute infrastructure was provisioned. Usage remains intentionally minimal. Exact billed consumption will be confirmed after AWS billing settles (7-day event retention). | 2026-10-21 | `aws bedrock-agentcore-control delete-memory --memory-id ThreadKeeperHackathonMemory-KkM33n8BE1 --profile threadkeeper --region ap-southeast-2` | Active |
 
 ---
 

@@ -16,7 +16,7 @@
 | **1:00 – 1:20** | **The Interruption (Process Death & Code Change)** | Simulate being away from desk | Terminal shows Node process exit; code edit in `src/payment.ts`. |
 | **1:20 – 1:50** | **The Return ("Alexa, where was I?")** | Clean process resume & spoken brief | Voice query; fresh process launches; audio playback of 5-sentence brief. |
 | **1:50 – 2:15** | **THEN vs NOW & Epistemic Trust** | Prove grounding over hallucination | Inspect Visual Console: THEN vs NOW grid and 4 epistemic cards. |
-| **2:15 – 2:35** | **Under the Hood (AWS & MCP Proof)** | Architecture & protocol validation | Show Streamable HTTP MCP handshake, AgentCore Memory ID, and 83 passing tests. |
+| **2:15 – 2:35** | **Under the Hood (AWS & MCP Proof)** | Architecture & protocol validation | Show Streamable HTTP MCP handshake, AgentCore Memory ID, and 88 passing tests. |
 | **2:35 – 2:45** | **Closing Payoff** | Memorable call to action | Final slide with GitHub repository link and hackathon summary. |
 
 ---
@@ -97,9 +97,9 @@
 * **Visual:** Split screen showing:
   1. Terminal running `npm run verify:mcp` (Streamable HTTP, protocol `2025-11-25`, all 6 tools discovered and called).
   2. AWS Console / terminal showing active AgentCore Memory resource (`ThreadKeeperHackathonMemory-KkM33n8BE1`) in `ap-southeast-2`.
-  3. Terminal running `npm test` showing 83 passing tests in under 2 seconds.
+  3. Terminal running `npm test` showing 88 passing tests in under 2 seconds.
 * **Narration:**
-  > *"Under the hood, ThreadKeeper is a fully self-hosted MCP server running over modern Streamable HTTP. It integrates Amazon Bedrock Nova Lite for semantic reasoning and Bedrock AgentCore Memory for cross-process persistence—all backed by 83 deterministic automated tests."*
+  > *"Under the hood, ThreadKeeper is a fully self-hosted MCP server running over modern Streamable HTTP. It integrates Amazon Bedrock Nova Lite for semantic reasoning and Bedrock AgentCore Memory for cross-process persistence—all backed by 88 deterministic automated tests."*
 
 ---
 
